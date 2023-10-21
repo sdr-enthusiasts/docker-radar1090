@@ -10,6 +10,7 @@ RUN set -x && \
     #
     TEMP_PACKAGES+=(pkg-config) && \
     TEMP_PACKAGES+=(build-essential) && \
+    KEPT_PACKAGES+=(tcpdump) && \
     #TEMP_PACKAGES+=(lsof) && \
     #
     # KEPT_PACKAGES+=(unzip) && \
