@@ -78,7 +78,7 @@ fix_feeder () { # bring down the feeder Python app:
 while :
 do
   # first sleep a bit
-  sleep "$MEASURE_INTERVAL" & wait !
+  sleep "$MEASURE_INTERVAL"
 
   # then check if data is flowing
   if ! monitor_feeder; then
