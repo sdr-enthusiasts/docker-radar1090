@@ -1,0 +1,105 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145,SC2120
+
+source /scripts/common
+s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
+
+#---------------------------------------------------------------------------------------------
+# This repository, docker container, and accompanying scripts and documentation is
+# Copyright (C) 2022-2023, Ramon F. Kolb (kx1t)
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+# Radar1090 is an ADS-B RADAR Feed Service
+# Copyright (C) 2023 by Michael J. Tubby B.Sc. MIET G8TIC mik@tubby.org All Rights Reserved.
+# No license to the "radar" binary and its source code is implied; contact the author for information.
+#---------------------------------------------------------------------------------------------
+
+# Watchdog to ensure there's traffic flowing for radar1090
+# Uses TCPDUMP to ensure there are packets sent to the destination port
+
+"${s6wrap[@]}" echo "Started as an s6 service"
+
+MEASURE_TIME="${MEASURE_TIME:-15}"              # how long we take samples to check data is flowing
+MEASURE_INTERVAL="${MEASURE_INTERVAL:-300}"     # wait time between check runs
+TRANSPORT_PROTOCOL="${TRANSPORT_PROTOCOL:-udp}" # [udp|tcp] the protocol used to transport data to the remote aggregator
+TRANSPORT_PROTOCOL="${TRANSPORT_PROTOCOL,,}"
+
+HEALTHFILE=/run/watchdog-log/health_failures_since_last_success
+
+# make sure the log files exists:
+mkdir -p "$(dirname "$HEALTHFILE")"
+echo "0" > "$HEALTHFILE"
+
+monitor_feeder () { 
+  # see if data is flowing from this container to the remote aggregator
+  # usage: monitor_feeder [measure_time]
+  #        where measure_time is optional; if omitted, $MEASURE_TIME or 10 secs will be used
+  #        $RADARSERVER and $RADARPORT are used to indicate the aggregator's name and port, defaulting to adsb-in.1090mhz.uk and 2227
+  # Function returns 0 (true) if successful and 1 (false) if the host cannot be reached
+  local measure_time
+  local result
+  local resultcode
+
+  chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo monitoring "${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} for ${measure_time:-10} secs"  || true
+
+  measure_time="${1:-${MEASURE_TIME:-10}}"
+  result="$(grep captured <<< "$(timeout --preserve-status "${measure_time}" tcpdump -p dst "${RADARSERVER:-adsb-in.1090mhz.uk}" and "${TRANSPORT_PROTOCOL:-udp}" port "${RADARPORT:-2227}" 2>/dev/stdout 1>/dev/null)" | awk '{print $1}')" 
+  resultcode="$?"
+
+  if  (( resultcode != 0 )); then
+    return $resultcode
+  elif [[ "$result" == "0" ]]; then
+    return 1
+  else
+    return 0
+  fi
+}
+
+fix_feeder () { # bring down the feeder Python app:
+  pkill -SIGTERM -f "/usr/sbin/radar"
+  sleep 10
+
+  # check if data is flowing again:
+  monitor_feeder
+  return $?
+}
+
+while :
+do
+  # first sleep a bit
+  sleep "$MEASURE_INTERVAL" & wait !
+
+  # then check if data is flowing
+  if ! monitor_feeder; then
+    "${s6wrap[@]}" --args echo "WARNING: DataFlow Failure: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs. Feeder will be restarted"
+    if ! fix_feeder
+    then
+      "${s6wrap[@]}" --args echo "FATAL: DataFlow Failure: Restarting feeder module didn't restart the data flow. Please check your system! We will try again in $MEASURE_INTERVAL secs"
+      read -r healthfailures < "$HEALTHFILE"
+      (( healthfailures++ )) || true
+      echo "$healthfailures" > "$HEALTHFILE"
+    else
+      "${s6wrap[@]}" --args echo "SUCCESS: Feeder restart made data flow again!"
+      echo "0" > "$HEALTHFILE"
+    fi
+
+  else
+    if chk_enabled "$VERBOSE"; then
+      "${s6wrap[@]}" --args echo "SUCCESS: Data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs"
+    fi
+    echo "0" > "$HEALTHFILE"
+
+  fi
+
+done
