@@ -11,13 +11,7 @@ RUN set -x && \
     TEMP_PACKAGES+=(pkg-config) && \
     TEMP_PACKAGES+=(build-essential) && \
     KEPT_PACKAGES+=(tcpdump) && \
-    #TEMP_PACKAGES+=(lsof) && \
-    #
-    # KEPT_PACKAGES+=(unzip) && \
-    # KEPT_PACKAGES+=(psmisc) && \
-    # KEPT_PACKAGES+=(procps nano) && \
-    # KEPT_PACKAGES+=(jq) && \
-    # KEPT_PACKAGES+=(iputils-ping) && \
+    KEPT_PACKAGES+=(logrotate) && \
     # 
     # Install all the apt packages:
     apt-get update -q && \

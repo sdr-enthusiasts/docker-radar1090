@@ -28,7 +28,7 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 # Watchdog to ensure there's traffic flowing for radar1090
 # Uses TCPDUMP to ensure there are packets sent to the destination port
 
-"${s6wrap[@]}" --args echo "Started as an s6 service"
+"${s6wrap[@]}" --args echo "starting as a service..."
 
 MEASURE_TIME="${MEASURE_TIME:-15}"              # how long we take samples to check data is flowing
 MEASURE_INTERVAL="${MEASURE_INTERVAL:-300}"     # wait time between check runs

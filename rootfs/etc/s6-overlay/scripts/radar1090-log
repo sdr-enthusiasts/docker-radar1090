@@ -1,0 +1,69 @@
+#!/command/with-contenv bash
+# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145
+
+source /scripts/common
+s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
+
+#---------------------------------------------------------------------------------------------
+# This repository, docker container, and accompanying scripts and documentation is
+# Copyright (C) 2022-2023, Ramon F. Kolb (kx1t)
+#
+# This program is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation, either version 3 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with this program.
+# If not, see <https://www.gnu.org/licenses/>.
+#
+# Radar1090 is an ADS-B RADAR Feed Service
+# Copyright (C) 2023 by Michael J. Tubby B.Sc. MIET G8TIC mik@tubby.org All Rights Reserved.
+# No license to the "radar" binary and its source code is implied; contact the author for information.
+#---------------------------------------------------------------------------------------------
+
+# Monitor the radar1090 messages and print a summary:
+# - every minute if VERBOSE==true
+# - every 5 minutes if VERBOSE!=true
+# Note that the output of radar1090 writes a log line every second, even though it may take up to 60 seconds for its buffer to be flushed
+
+"${s6wrap[@]}" --args echo "starting as a service..."
+
+VERBOSE_WAIT=60
+NON_VERBOSE_WAIT=300
+LOGFILE="/var/logs/radar1090"
+
+chk_enabled "$VERBOSE" && WAITTIME="$VERBOSE_WAIT" || WAITTIME="$NON_VERBOSE_WAIT"
+
+# seed random generator:
+RANDOM=$(date +%s)
+# Add some random time (0-32 secs) to the start of this service:
+sleep $((RANDOM/1000))
+
+# Now go at it furreal:
+while true; do
+    # First wait to collect some data. This data is written by the radar1090 binary to /var/logs/radar1090:
+    sleep "$WAITTIME"
+    # read the last lines into an array:
+    readarray -t loglines <<< "$(tail -"$WAITTIME" "$LOGFILE")"
+    # Immediately clear logs:
+    logrotate -f /etc/default/logrotate.conf
+    
+    # Now parse some statistics:
+    packets=("$(awk '{ print $3 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
+    dupes=("$(awk '{ print $7 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
+    bytespersec=("$(awk '{ print $11 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
+    total_packets="$(bc -l <<< "${packets[@]//[$'\t\r\n']/+}")"
+    total_dupes="$(bc -l <<< "${dupes[@]//[$'\t\r\n']/+}")"
+    avg_bps="$(bc -l <<< "scale=0; (${bytespersec[@]//[$'\t\r\n']/+})/${#loglines[@]}/1")"
+    
+    # Print the stats to the container logs:
+    "${s6wrap[@]}" --args echo "Traffic statistics over the previous $WAITTIME seconds:"
+    "${s6wrap[@]}" --args echo "- Total Packets Received from ${BEASTHOST:-ultrafeeder}: $total_packets"
+    "${s6wrap[@]}" --args echo "- Duplicate Packets Discarded: $total_dupes"
+    "${s6wrap[@]}" --args echo "- Average bandwitdh user (excluding overhead): $avg_bps bytes/sec"
+
+done

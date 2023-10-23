@@ -27,7 +27,7 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 # Run radar1090 as a long term service
 
-"${s6wrap[@]}" --args echo "Starting radar 1090 as a service..."
+"${s6wrap[@]}" --args echo "starting as a service..."
 
 function valid_ip()
 {
@@ -83,4 +83,4 @@ RADAR_CMD+=("-l ${beast_host}")
 chk_enabled "$VERBOSE" && RADAR_CMD+=("-s") || true
 
 "${s6wrap[@]}" --args echo "invoking: ${RADAR_BIN[@]} ${RADAR_CMD[@]}"
-"${s6wrap[@]}" --args ${RADAR_BIN[@]} ${RADAR_CMD[@]}
+${RADAR_BIN[@]} ${RADAR_CMD[@]} > /var/log/radar1090
