@@ -44,6 +44,7 @@ RANDOM=$(date +%s)
 sleep $((RANDOM/1000))
 
 # Now go at it furreal:
+touch "$LOGFILE"
 while true; do
     # First wait to collect some data. This data is written by the radar1090 binary to /var/logs/radar1090:
     sleep "$WAITTIME"
@@ -51,7 +52,7 @@ while true; do
     readarray -t loglines <<< "$(tail -"$WAITTIME" "$LOGFILE")"
     # Immediately clear logs:
     logrotate -f /etc/default/logrotate.conf
-    
+
     # Now parse some statistics:
     packets=("$(awk '{ print $3 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
     dupes=("$(awk '{ print $7 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
