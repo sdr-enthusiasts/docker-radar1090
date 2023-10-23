@@ -73,7 +73,7 @@ if ! valid_ip "$beast_host"; then
     chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
 fi
 
-RADAR_BIN=(/usr/sbin/radar)
+RADAR_BIN=(stdbuf -oL /usr/sbin/radar)
 
 RADAR_CMD=("-b")
 RADAR_CMD+=("-k ${RADAR1090_KEY}")

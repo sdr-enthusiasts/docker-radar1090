@@ -58,6 +58,10 @@ while true; do
     readarray -t loglines <<< "$(tail -"$WAITTIME" "$LOGFILE")"
     # Immediately clear logs:
     logrotate -f /etc/default/logrotate.conf
+    # see if we need to clean up the last loglines entry because often it's incomplete
+    if [[ -z "$(awk '{ print $11 }' <<< "${loglines[-1]}")" ]]; then
+        unset 'loglines[-1]'
+    fi
 
     # Now parse some statistics:
     packets=("$(awk '{ print $3 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
