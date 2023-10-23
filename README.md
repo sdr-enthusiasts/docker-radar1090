@@ -11,6 +11,7 @@ Radar1090 UK feeder container
     - [Adding and configuring Radar1090 UK](#adding-and-configuring-radar1090-uk)
   - [Watchdog](#watchdog)
   - [Supported parameters](#supported-parameters)
+  - [HealthCheck](#healthcheck)
   - [Logging](#logging)
   - [Getting help](#getting-help)
 
@@ -80,7 +81,7 @@ Once you have added this to your setup, simply do `docker compose up -d` in the 
 ## Watchdog
 
 The container uses an internal Watchdog to ensure that data is still flowing to the Radar1090 Server. Data flow can stop for any reason, and often the container can self-repair to get the data flow starting again.
-The watchdog runs by default every 15 minutes, and when it runs, it samples the data stream for 15 seconds. If no data flow was detected going from the container to the Radar1090 Server, it will try to restart the internal feeder module in an attempt to get data flowing again.
+The watchdog runs by default every 15 minutes, and when it runs, it will sample the data stream for 15 seconds. If no data flow was detected going from the container to the Radar1090 Server, it will try to restart the internal feeder module in an attempt to get data flowing again.
 
 Additionally, it will increase the *failure counter* (or reset this counter if data is flowing again).
 Once the *failure counter* is greater or equal to 3, the container's HEALTHCHECK will go *UNHEALTHY*. This will enable external management containers like `autoheal` to automatically restart the entire container.
@@ -99,6 +100,23 @@ The following parameters are supported for the `docker-radar1090` container. Ple
 | `MEASURE_INTERVAL` | Watchdog measurement interval (in secs) - interval in which the internal Watchdog verifies that data is still flowing to the Radar1090 Server | `300` |
 | `MEASURE_TIME` | Watchdog measurement time (in secs) - How long the internal Watchdog will monitor that stat is still flowing to the Radar1090 Server | `15` |
 | `FAILURES_TO_GO_UNHEALTHY` | HEALTHCHECK related parameter - the minimum number of consecutive Watchdog failures that will make the container go `UNHEALTHY` | `3` |
+
+## HealthCheck
+
+The container supports Docker's HEALTHCHECK feature. During the startup period of the first 5 minutes of the container running (or until the first HEALTHY status is returned), it will check the container's health every 30 seconds. After this startup period, it will check every 5 minutes if the container is healthy. The result of this HEALTHCHECK is used by external programs like `autoheal` to manage the container and attempt to restart it in case of failure.
+
+The HealthCheck itself performs two tests:
+
+- It checks if the Watchdog has 3 or more dataflow related failures
+- It checks if there were 3 or more unsuccessful attempts to resolve the BEASTHOST name.
+- 
+Note that the number of failures is configurable with the `FAILURES_TO_GO_UNHEALTHY` parameter.
+
+If, for any reason, you need to disabled HEALTHCHECK, you can use the following image tag instead of the one recommended above:
+
+```yaml
+    image: ghcr.io/sdr-enthusiasts/docker-radar1090:latest-nohealthcheck
+```
 
 ## Logging
 
