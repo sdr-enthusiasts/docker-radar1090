@@ -55,6 +55,7 @@ IP_RESOLVE_HEALTHFILE=/run/watchdog-log/beastname_resolution_failures
 
 # make sure the log files exists:
 mkdir -p "$(dirname "$IP_RESOLVE_HEALTHFILE")"
+echo "0" > "$IP_RESOLVE_HEALTHFILE"
 
 beast_host="${BEASTHOST:-ultrafeeder}"
 if ! valid_ip "$beast_host"; then
