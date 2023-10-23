@@ -109,7 +109,7 @@ The HealthCheck itself performs two tests:
 
 - It checks if the Watchdog has 3 or more dataflow related failures
 - It checks if there were 3 or more unsuccessful attempts to resolve the BEASTHOST name.
-- 
+
 Note that the number of failures is configurable with the `FAILURES_TO_GO_UNHEALTHY` parameter.
 
 If, for any reason, you need to disabled HEALTHCHECK, you can use the following image tag instead of the one recommended above:
