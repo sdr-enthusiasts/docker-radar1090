@@ -28,12 +28,12 @@ The following information was copied from the [Radar1090 UK website](https://www
 > We need to give your receiver a "station name". Station names string of 3-9 characters in length which can be a placename, callsign, nickname, etc.
 >
 > We have receivers called things like:
-> 
+>
 > FERNHILL (place)
 > PENBREY (place)
 > BIRTIES (nickname)
 > In many cases an approximate location works well as it reminds us where the receiver is located but provides a degree of privacy.
-> 
+>
 > **Antenna location**
 > We need the Latitude/Longitude of your antenna...
 >
@@ -79,12 +79,11 @@ Once you have added this to your setup, simply do `docker compose up -d` in the 
 
 ## Watchdog
 
-The container uses an internal Watchdog to ensure that data is still flowing to the Radar1090 Server. Data flow can stop for any reason, and often the container can self-repair to get the data flow starting again. 
-The watchdog runs by default every 15 minutes, and when it runs, it samples the data stream for 15 seconds. If no data flow was detected going from the container to the Radar1090 Server, it will try to restart the internal feeder module in an attempt to get data flowing again. 
+The container uses an internal Watchdog to ensure that data is still flowing to the Radar1090 Server. Data flow can stop for any reason, and often the container can self-repair to get the data flow starting again.
+The watchdog runs by default every 15 minutes, and when it runs, it samples the data stream for 15 seconds. If no data flow was detected going from the container to the Radar1090 Server, it will try to restart the internal feeder module in an attempt to get data flowing again.
 
 Additionally, it will increase the *failure counter* (or reset this counter if data is flowing again).
 Once the *failure counter* is greater or equal to 3, the container's HEALTHCHECK will go *UNHEALTHY*. This will enable external management containers like `autoheal` to automatically restart the entire container.
-
 
 ## Supported parameters
 
