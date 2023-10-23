@@ -27,4 +27,6 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 # Print container version
 
-"${s6wrap[@]}" --args echo "Container Version: $([[ -f .CONTAINER_VERSION ]] && cat .CONTAINER_VERSION || true))"
+if [[ -f /.CONTAINER_VERSION ]]; then
+    "${s6wrap[@]}" --args echo "Container Version: $(</.CONTAINER_VERSION)"
+fi
