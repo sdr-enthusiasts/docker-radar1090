@@ -51,6 +51,11 @@ if [[ -z "${RADAR1090_KEY}" ]]; then
 	exec sleep infinity
 fi
 
+IP_RESOLVE_HEALTHFILE=/run/watchdog-log/beastname_resolution_failures
+
+# make sure the log files exists:
+mkdir -p "$(dirname "$IP_RESOLVE_HEALTHFILE")"
+
 beast_host="${BEASTHOST:-ultrafeeder}"
 if ! valid_ip "$beast_host"; then
 	beast_host="$(dig "${BEASTHOST:-ultrafeeder}" | awk '{if ($1 == "'"${BEASTHOST:-ultrafeeder}"'.") print $5}')"
@@ -58,6 +63,9 @@ if ! valid_ip "$beast_host"; then
 	if ! valid_ip "$beast_host"; then
         while ! valid_ip "$beast_host"; do
             "${s6wrap[@]}" --args echo "WARNING: BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") cannot be resolved. Make sure that \"${BEASTHOST:-ultrafeeder}\" is running or check your BEASTHOST parameter setting. Trying again in 30 seconds."
+            read -r healthfailures < "$IP_RESOLVE_HEALTHFILE"
+            (( healthfailures++ )) || true
+            echo "$healthfailures" > "$IP_RESOLVE_HEALTHFILE"
             sleep 30
             beast_host="$(dig "$${BEASTHOST:-ultrafeeder}" | awk '{if ($1 == "'"${BEASTHOST:-ultrafeeder}"'.") print $5}')"
         done
