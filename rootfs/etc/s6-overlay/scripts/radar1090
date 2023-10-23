@@ -31,17 +31,15 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 function valid_ip()
 {
-    local  ip=$1
-    local  stat=1
+    local ipx=$1
+    local stat=1
+    local ip
 
-    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        OIFS=$IFS
-        IFS='.'
-        ip=("$ip")
-        IFS=$OIFS
+    if [[ $ipx =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        IFS='.' readarray -d '.' -t ip <<< "$ipx"
         [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
             && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
-        stat=$?
+        stat=$? 
     fi
     return $stat
 }
