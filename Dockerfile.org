@@ -1,35 +1,15 @@
+FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base
+
 ARG radarurl="ftp://public.tubby.org/radar-0.99.tar.gz"
 ARG radarurlcreds="ftp:"
 
-FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base as build
-    # define packages needed for installation and general management of the container:
 RUN set -x && \
+    # define packages needed for installation and general management of the container:
     TEMP_PACKAGES=() && \
+    KEPT_PACKAGES=() && \
+    #
     TEMP_PACKAGES+=(pkg-config) && \
     TEMP_PACKAGES+=(build-essential) && \
-    # Install all the apt packages:
-    apt-get update -q && \
-    apt-get install -q -o APT::Autoremove::RecommendsImportant=0 -o APT::Autoremove::SuggestsImportant=0 -o Dpkg::Options::="--force-confold" -y --no-install-recommends  --no-install-suggests ${TEMP_PACKAGES[@]} ${KEPT_PACKAGES[@]} && \
-    #
-    # install stuff
-    mkdir -p /src && \
-    pushd /src && \
-      curl -sSL -u $radarurlcreds $radarurl -o radar.tgz && \
-      tar zxf radar.tgz && \
-      mv -f radar-* radar && \
-      cd radar && \
-      make && \
-      make install && \
-    popd
-
-
-FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base
-
-COPY --from=build /usr/sbin/radar /usr/sbin/radar
-
-RUN set -x && \
-    # define packages needed for installation and general management of the container:
-    KEPT_PACKAGES=() && \
     KEPT_PACKAGES+=(tcpdump) && \
     KEPT_PACKAGES+=(logrotate) && \
     # 
@@ -50,17 +30,16 @@ RUN set -x && \
     useradd -U -M -s /usr/sbin/nologin radar && \
     #
     # Clean up
-    echo Autoremoving/cleaning APT && \
+    echo Uninstalling $TEMP_PACKAGES && \
+    apt-get remove -y -q ${TEMP_PACKAGES[@]} && \
     apt-get autoremove -q -o APT::Autoremove::RecommendsImportant=0 -o APT::Autoremove::SuggestsImportant=0 -y && \
     apt-get clean -y -q && \
     rm -rf \
-      /src/* \
-      /tmp/* \
-      /var/lib/apt/lists/* \
-      /.dockerenv \
-      /git && \
-    #
-    # add version to the container
+    /src/* \
+    /tmp/* \
+    /var/lib/apt/lists/* \
+    /.dockerenv \
+    /git && \
     version="$(/usr/sbin/radar -v | sed 's/^.*Version \(.*\)$/\1/g;q')" && \
     echo "${version// /_} ($(uname -m))" > /.CONTAINER_VERSION
 #
