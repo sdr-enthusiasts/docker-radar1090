@@ -83,4 +83,4 @@ RADAR_CMD+=("-l ${beast_host}")
 RADAR_CMD+=("-s")
 
 "${s6wrap[@]}" --args echo "invoking: ${RADAR_BIN[@]} ${RADAR_CMD[@]}"
-${RADAR_BIN[@]} ${RADAR_CMD[@]} >> /var/logs/radar1090
+${RADAR_BIN[@]} ${RADAR_CMD[@]} >> /var/log/radar1090

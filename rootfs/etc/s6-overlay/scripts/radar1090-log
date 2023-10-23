@@ -34,7 +34,7 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 VERBOSE_WAIT=60
 NON_VERBOSE_WAIT=300
-LOGFILE="/var/logs/radar1090"
+LOGFILE="/var/log/radar1090"
 
 chk_enabled "$VERBOSE" && WAITTIME="$VERBOSE_WAIT" || WAITTIME="$NON_VERBOSE_WAIT"
 
@@ -48,7 +48,13 @@ touch "$LOGFILE"
 while true; do
     # First wait to collect some data. This data is written by the radar1090 binary to /var/logs/radar1090:
     sleep "$WAITTIME"
-    # read the last lines into an array:
+
+    # make sure there is actually data in $LOGFILE:
+    while (( $(wc -l < "$LOGFILE") < 10 )); do
+        sleep 1
+    done
+
+    # Now read the data:
     readarray -t loglines <<< "$(tail -"$WAITTIME" "$LOGFILE")"
     # Immediately clear logs:
     logrotate -f /etc/default/logrotate.conf
@@ -62,9 +68,10 @@ while true; do
     avg_bps="$(bc -l <<< "scale=0; (${bytespersec[@]//[$'\t\r\n']/+})/${#loglines[@]}/1")"
     
     # Print the stats to the container logs:
+    "${s6wrap[@]}" --args echo "------------------------"
     "${s6wrap[@]}" --args echo "Traffic statistics over the previous $WAITTIME seconds:"
-    "${s6wrap[@]}" --args echo "- Total Packets Received from ${BEASTHOST:-ultrafeeder}: $total_packets"
-    "${s6wrap[@]}" --args echo "- Duplicate Packets Discarded: $total_dupes"
-    "${s6wrap[@]}" --args echo "- Average bandwitdh user (excluding overhead): $avg_bps bytes/sec"
+    "${s6wrap[@]}" --args echo "- Total packets received from ${BEASTHOST:-ultrafeeder}: $total_packets"
+    "${s6wrap[@]}" --args echo "- Duplicate dackets discarded: $total_dupes"
+    "${s6wrap[@]}" --args echo "- Average bandwidth used (excluding overhead): $avg_bps bytes/sec"
 
 done
