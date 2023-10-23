@@ -72,7 +72,6 @@ if ! valid_ip "$beast_host"; then
     echo "0" > "$IP_RESOLVE_HEALTHFILE"
     chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
 fi
-chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
 
 RADAR_BIN=(/usr/sbin/radar)
 
