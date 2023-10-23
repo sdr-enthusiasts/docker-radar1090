@@ -66,11 +66,11 @@ if ! valid_ip "$beast_host"; then
             (( healthfailures++ )) || true
             echo "$healthfailures" > "$IP_RESOLVE_HEALTHFILE"
             sleep 30
-            beast_host="$(dig "$${BEASTHOST:-ultrafeeder}" | awk '{if ($1 == "'"${BEASTHOST:-ultrafeeder}"'.") print $5}')"
+            beast_host="$(dig "${BEASTHOST:-ultrafeeder}" | awk '{if ($1 == "'"${BEASTHOST:-ultrafeeder}"'.") print $5}')"
         done
     fi
-    chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
     echo "0" > "$IP_RESOLVE_HEALTHFILE"
+    chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
 fi
 chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
 
