@@ -75,7 +75,7 @@ while true; do
     "${s6wrap[@]}" --args echo "------------------------"
     "${s6wrap[@]}" --args echo "Traffic statistics over the previous $WAITTIME seconds:"
     "${s6wrap[@]}" --args echo "- Total packets received from ${BEASTHOST:-ultrafeeder}: $total_packets"
-    "${s6wrap[@]}" --args echo "- Duplicate dackets discarded: $total_dupes"
+    "${s6wrap[@]}" --args echo "- Duplicate packets discarded: $total_dupes"
     "${s6wrap[@]}" --args echo "- Average bandwidth used (excluding overhead): $avg_bps bytes/sec"
 
 done

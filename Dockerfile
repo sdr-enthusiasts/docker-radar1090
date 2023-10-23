@@ -39,7 +39,9 @@ RUN set -x && \
     /tmp/* \
     /var/lib/apt/lists/* \
     /.dockerenv \
-    /git
+    /git && \
+    version="$(/usr/sbin/radar -v | sed 's/^.*Version \(.*\)$/\1/g;q')" && \
+    echo "${version// /_} ($(uname -m))" > /.CONTAINER_VERSION
 #
 COPY rootfs/ /
 #
