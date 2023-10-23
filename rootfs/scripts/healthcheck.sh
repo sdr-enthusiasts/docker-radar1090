@@ -43,7 +43,7 @@ touch "$HEALTHFILE"
 
 read -r healthfailures < "$HEALTHFILE"
 
-if [[ -n "$healthfailures" ]] && (( healthfailures > FAILURES_TO_GO_UNHEALTHY )); then
+if [[ -n "$healthfailures" ]] && (( healthfailures >= FAILURES_TO_GO_UNHEALTHY )); then
     "${s6wrap[@]}" --args echo "UNHEALTHY: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} - failure count since last successful measurement is $healthfailures"
     exit 1
 else

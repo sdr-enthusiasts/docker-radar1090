@@ -54,10 +54,15 @@ fi
 beast_host="${BEASTHOST:-ultrafeeder}"
 if ! valid_ip "$beast_host"; then
 	beast_host="$(dig "$beast_host" | awk '{if ($1 == "'"$beast_host"'.") print $5}')"
+    # If it fails, print error message and loop trying every 30 secs
 	if [[ -z "$beast_host" ]]; then
-		"${s6wrap[@]}" --args echo "FATAL: BEASTHOST (\"$BEASTHOST\") must be a resolvable domain/hostname or an IP address. Halting operation."
-		exec sleep infinity
-	fi
+        while [[ -z "$beast_host" ]]; do
+            "${s6wrap[@]}" --args echo "WARNING: BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") cannot be resolved. Make sure that \"${BEASTHOST:-ultrafeeder}\" is running or check your BEASTHOST parameter setting. Trying again in 30 seconds."
+            sleep 30
+            beast_host="$(dig "$beast_host" | awk '{if ($1 == "'"$beast_host"'.") print $5}')"
+        done
+    fi
+    chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
 fi
 
 RADAR_BIN=(/usr/sbin/radar)
