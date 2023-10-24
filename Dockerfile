@@ -38,16 +38,7 @@ RUN set -x && \
     apt-get update -q && \
     apt-get install -q -o APT::Autoremove::RecommendsImportant=0 -o APT::Autoremove::SuggestsImportant=0 -o Dpkg::Options::="--force-confold" -y --no-install-recommends  --no-install-suggests ${TEMP_PACKAGES[@]} ${KEPT_PACKAGES[@]} && \
     #
-    # install stuff
-    mkdir -p /src && \
-    pushd /src && \
-      curl -sSL -u $radarurlcreds $radarurl -o radar.tgz && \
-      tar zxf radar.tgz && \
-      mv -f radar-* radar && \
-      cd radar && \
-      make && \
-      make install && \
-    popd && \
+    # add user for radar to run as
     useradd -U -M -s /usr/sbin/nologin radar && \
     #
     # Clean up

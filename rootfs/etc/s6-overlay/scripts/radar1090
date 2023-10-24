@@ -82,5 +82,10 @@ RADAR_CMD+=("-p ${RADARPORT:-2227}")
 RADAR_CMD+=("-l ${beast_host}")
 RADAR_CMD+=("-s")
 
+# Make sure logfile exists and is writable with UID "radar".
+# Probably not necessary as the redirect runs as `root`, but better be safe than sorry
+touch /var/log/radar1090
+chmod a+w /var/log/radar1090
+
 "${s6wrap[@]}" --args echo "invoking: ${RADAR_BIN[@]} ${RADAR_CMD[@]}"
 ${RADAR_BIN[@]} ${RADAR_CMD[@]} >> /var/log/radar1090
