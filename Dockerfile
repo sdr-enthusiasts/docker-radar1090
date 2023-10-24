@@ -1,6 +1,6 @@
 FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base as build
 
-ARG radarurl="ftp://public.tubby.org/radar-0.99.tar.gz"
+ARG radarurl="ftp://public.tubby.org/radar-latest.tar.gz"
 ARG radarurlcreds="ftp:"
 
 RUN set -x && \
