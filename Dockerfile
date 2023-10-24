@@ -1,9 +1,10 @@
+FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base as build
+
 ARG radarurl="ftp://public.tubby.org/radar-0.99.tar.gz"
 ARG radarurlcreds="ftp:"
 
-FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base as build
-    # define packages needed for installation and general management of the container:
 RUN set -x && \
+    # define packages needed for installation and general management of the container:
     TEMP_PACKAGES=() && \
     TEMP_PACKAGES+=(pkg-config) && \
     TEMP_PACKAGES+=(build-essential) && \
