@@ -17,14 +17,10 @@ on:
     branches:
       - main
     # Don't trigger if it's just a documentation update
-    paths-ignore:
-      - "**.md"
-      - "**.MD"
-      - "**.yml"
-      - "LICENSE"
-      - ".gitattributes"
-      - ".gitignore"
-      - ".dockerignore"
+    paths:
+      - "rust/**"
+      - "Dockerfile**"
+      - "rootfs/**"
 
 # Set workflow-wide environment variables
 #  - REPO: repo name on dockerhub
@@ -81,7 +77,7 @@ jobs:
       build_version_specific: false
       build_platform_specific: false
       build_nohealthcheck: true
-      # build_baseimage_url: 
+      # build_baseimage_url:
     secrets:
       ghcr_token: ${{ secrets.GITHUB_TOKEN }}
 
