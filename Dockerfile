@@ -1,7 +1,6 @@
 FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base as build
 
-ARG radarurl="ftp://public.tubby.org/radar-latest.tar.gz"
-ARG radarurlcreds="ftp:"
+ARG radar_base_url="https://1090mhz.uk/files/"
 
 RUN set -x && \
     # define packages needed for installation and general management of the container:
@@ -15,7 +14,8 @@ RUN set -x && \
     # install stuff
     mkdir -p /src && \
     pushd /src && \
-      curl -sSL -u $radarurlcreds $radarurl -o radar.tgz && \
+      version="$(curl -sSL ${radar_base_url}/version.txt)" &&\
+      curl -sSL ${radar_base_url}/${version}.tar.gz -o radar.tgz && \
       tar zxf radar.tgz && \
       mv -f radar-* radar && \
       cd radar && \
