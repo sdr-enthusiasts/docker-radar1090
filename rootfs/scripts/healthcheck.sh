@@ -50,7 +50,7 @@ read -r ip_healthfailures < "$IP_RESOLVE_HEALTHFILE" || true
 
 exitvalue=0
 if [[ -n "$flow_healthfailures" ]] && (( flow_healthfailures >= FAILURES_TO_GO_UNHEALTHY )); then
-    "${s6wrap[@]}" --args echo "UNHEALTHY: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} - failure count since last successful measurement is $flow_healthfailures"
+    "${s6wrap[@]}" --args echo "UNHEALTHY: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-5997}/${TRANSPORT_PROTOCOL:-udp} - failure count since last successful measurement is $flow_healthfailures"
     exitvalue=1
 fi
 if [[ -n "$ip_healthfailures" ]] && (( ip_healthfailures >= FAILURES_TO_GO_UNHEALTHY )); then
