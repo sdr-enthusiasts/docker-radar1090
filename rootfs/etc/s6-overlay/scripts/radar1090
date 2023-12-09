@@ -75,9 +75,9 @@ fi
 
 RADAR_BIN=(stdbuf -oL /usr/sbin/radar)
 
-RADAR_CMD=("-b")
+RADAR_CMD=()
 RADAR_CMD+=("-k ${RADAR1090_KEY}")
-RADAR_CMD+=("-h ${RADARSERVER:-adsb-in.1090mhz.uk}")
+RADAR_CMD+=("${RADARSERVER:+-h }${RADARSERVER}")
 RADAR_CMD+=("${HMAC_KEY:+-p }${HMAC_KEY}")
 RADAR_CMD+=("-l ${beast_host}")
 RADAR_CMD+=("-f")
