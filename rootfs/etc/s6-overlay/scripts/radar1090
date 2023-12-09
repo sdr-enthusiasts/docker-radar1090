@@ -78,9 +78,9 @@ RADAR_BIN=(stdbuf -oL /usr/sbin/radar)
 RADAR_CMD=("-b")
 RADAR_CMD+=("-k ${RADAR1090_KEY}")
 RADAR_CMD+=("-h ${RADARSERVER:-adsb-in.1090mhz.uk}")
-RADAR_CMD+=("-p ${RADARPORT:-2227}")
+RADAR_CMD+=("${HMAC_KEY:+-p }${HMAC_KEY}")
 RADAR_CMD+=("-l ${beast_host}")
-RADAR_CMD+=("-s")
+RADAR_CMD+=("-f")
 
 # Make sure logfile exists and is writable with UID "radar".
 # Probably not necessary as the redirect runs as `root`, but better be safe than sorry
