@@ -54,7 +54,7 @@ monitor_feeder () {
   chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo monitoring "${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} for ${measure_time:-10} secs"  || true
 
   measure_time="${1:-${MEASURE_TIME:-10}}"
-  result="$(grep captured <<< "$(timeout --preserve-status "${measure_time}" tcpdump -p dst "${RADARSERVER:-adsb-in.1090mhz.uk}" and "${TRANSPORT_PROTOCOL:-udp}" port "${RADARPORT:-2227}" 2>/dev/stdout 1>/dev/null)" | awk '{print $1}')" 
+  result="$(grep captured <<< "$(timeout --preserve-status "${measure_time}" tcpdump -p dst "${RADARSERVER:-adsb-in.1090mhz.uk}" and "${TRANSPORT_PROTOCOL:-udp}" port "${RADARPORT:-5997}" 2>/dev/stdout 1>/dev/null)" | awk '{print $1}')" 
   resultcode="$?"
 
   if  (( resultcode != 0 )); then
