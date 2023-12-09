@@ -96,7 +96,7 @@ The following parameters are supported for the `docker-radar1090` container. Ple
 | `RADAR1090_KEY` | Sharing Key (in this format `0x7A3DF151D95F3E9A`) as provided by Radar1090 UK | Unset |
 | `BEASTHOST` | Hostname or IP address of the Beast-format data source. Use the container name if available, or use the host machine's IP address (and not `localhost` or `127.0.0.1`!) if your feeder is not containerized | `ultrafeeder` |
 | `RADARSERVER` | Hostname or IP address of the Radar1090 Server. You shouldn't have to set this parameter unless Radar1090 asks you to change it | `adsb-in.1090mhz.uk` |
-| `RADARPORT` | UDP Port number of the Radar1090 Server. You shouldn't have to set this parameter unless Radar1090 asks you to change it | `2227` |
+| `HMAC_KEY` | HMAC PSK key to be used when secure data transmissions are required. Do not change unless you are requested by the Radar1090b server owner | Unset | 
 | `MEASURE_INTERVAL` | Watchdog measurement interval (in secs) - interval in which the internal Watchdog verifies that data is still flowing to the Radar1090 Server | `300` |
 | `MEASURE_TIME` | Watchdog measurement time (in secs) - How long the internal Watchdog will monitor that stat is still flowing to the Radar1090 Server | `15` |
 | `FAILURES_TO_GO_UNHEALTHY` | HEALTHCHECK related parameter - the minimum number of consecutive Watchdog failures that will make the container go `UNHEALTHY` | `3` |
