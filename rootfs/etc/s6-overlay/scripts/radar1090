@@ -77,7 +77,11 @@ RADAR_BIN=(stdbuf -oL /usr/sbin/radar)
 
 RADAR_CMD=()
 RADAR_CMD+=("-k ${RADAR1090_KEY}")
-RADAR_CMD+=("${RADARSERVER:+-h }${RADARSERVER}")
+if (( $(bc -l <<< "$(awk -F- '{print $1}' < /.CONTAINER_VERSION) > 2.00") == 1 )); then
+  RADAR_CMD+=("${RADARSERVER:+-h }${RADARSERVER}")
+else
+  RADAR_CMD+=("-h ${RADARSERVER:-adsb-in.1090mhz.uk}")
+fi
 RADAR_CMD+=("${HMAC_KEY:+-p }${HMAC_KEY}")
 RADAR_CMD+=("-l ${beast_host}")
 RADAR_CMD+=("-f")
