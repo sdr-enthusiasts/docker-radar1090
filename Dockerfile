@@ -1,12 +1,14 @@
 FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base as build
 
 ARG radar_base_url="https://1090mhz.uk/files/"
+ARG radar_repo="https://github.com/G8TIC/radar.git"
 
 RUN set -x && \
     # define packages needed for installation and general management of the container:
     TEMP_PACKAGES=() && \
     TEMP_PACKAGES+=(pkg-config) && \
     TEMP_PACKAGES+=(build-essential) && \
+    TEMP_PACKAGES+=(git) && \
     # Install all the apt packages:
     apt-get update -q && \
     apt-get install -q -o APT::Autoremove::RecommendsImportant=0 -o APT::Autoremove::SuggestsImportant=0 -o Dpkg::Options::="--force-confold" -y --no-install-recommends  --no-install-suggests ${TEMP_PACKAGES[@]} ${KEPT_PACKAGES[@]} && \
@@ -14,15 +16,18 @@ RUN set -x && \
     # install stuff
     mkdir -p /src && \
     pushd /src && \
-      version="$(curl -sSL ${radar_base_url}/version.txt)" &&\
-      curl -sSL ${radar_base_url}/${version}.tar.gz -o radar.tgz && \
-      tar zxf radar.tgz && \
-      mv -f radar-* radar && \
+      # old method was to get the source from the $radar_base_url website:
+      # version="$(curl -sSL ${radar_base_url}/version.txt)" &&\
+      # curl -sSL ${radar_base_url}/${version}.tar.gz -o radar.tgz && \
+      # tar zxf radar.tgz && \
+      # mv -f radar-* radar && \
+      #
+      # new method is to get the source from the github repo:
+      git clone --depth=1 ${radar_repo} radar && \
       cd radar && \
       make && \
       make install && \
     popd
-
 
 FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base
 
