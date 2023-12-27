@@ -73,6 +73,13 @@ if ! valid_ip "$beast_host"; then
     chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
 fi
 
+if ! nc -z "${beast_host}" 30005 >/dev/null 2>&1; then
+    "${s6wrap[@]}" --args echo "INFO: Waiting for BEASTHOST (${BEASTHOST:-ultrafeeder}/${beast_host}) to come online."
+    while ! nc -z "${beast_host}" 30005 >/dev/null 2>&1; do
+        sleep 1
+    done
+fi
+
 RADAR_BIN=(stdbuf -oL /usr/sbin/radar)
 
 RADAR_CMD=()
