@@ -22,6 +22,10 @@ on:
       - "Dockerfile**"
       - "rootfs/**"
 
+  workflow_call:
+  repository_dispatch:
+    types: build_on_radar_update
+
 # Set workflow-wide environment variables
 #  - REPO: repo name on dockerhub
 #  - IMAGE: image name on dockerhub
