@@ -37,24 +37,15 @@ TRANSPORT_PROTOCOL="${TRANSPORT_PROTOCOL,,}"
 
 FAILURES_TO_GO_UNHEALTHY=3  # after this number of failures, the container will go unhealthy
 
-IP_RESOLVE_HEALTHFILE=/run/watchdog-log/beastname_resolution_failures
-
 # make sure the log files exists:
 mkdir -p "$(dirname "$HEALTHFILE")"
-mkdir -p "$(dirname "$IP_RESOLVE_HEALTHFILE")"
 touch "$HEALTHFILE"
-touch "$IP_RESOLVE_HEALTHFILE"
 
 read -r flow_healthfailures < "$HEALTHFILE" || true
-read -r ip_healthfailures < "$IP_RESOLVE_HEALTHFILE" || true
 
 exitvalue=0
 if [[ -n "$flow_healthfailures" ]] && (( flow_healthfailures >= FAILURES_TO_GO_UNHEALTHY )); then
     "${s6wrap[@]}" --args echo "UNHEALTHY: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-5997}/${TRANSPORT_PROTOCOL:-udp} - failure count since last successful measurement is $flow_healthfailures"
-    exitvalue=1
-fi
-if [[ -n "$ip_healthfailures" ]] && (( ip_healthfailures >= FAILURES_TO_GO_UNHEALTHY )); then
-    "${s6wrap[@]}" --args echo "UNHEALTHY: Cannot resolve IP address for ${BEASTHOST:-ultrafeeder} - failure count since last successful measurement is $ip_healthfailures"
     exitvalue=1
 fi
 

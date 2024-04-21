@@ -29,56 +29,19 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 "${s6wrap[@]}" --args echo "starting as a service..."
 
-function valid_ip()
-{
-    local ipx=$1
-    local stat=1
-    local ip
-
-    if [[ $ipx =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        IFS='.' readarray -d '.' -t ip <<< "$ipx"
-        [[ ${ip[0]} -le 255 && ${ip[1]} -le 255 \
-            && ${ip[2]} -le 255 && ${ip[3]} -le 255 ]]
-        stat=$? 
-    fi
-    return $stat
-}
-
 if [[ -z "${RADAR1090_KEY}" ]]; then
 	"${s6wrap[@]}" --args echo "FATAL: RADAR1090_KEY not set. Halting operation."
 	exec sleep infinity
 fi
 
-IP_RESOLVE_HEALTHFILE=/run/watchdog-log/beastname_resolution_failures
+BEASTHOST="${BEASTHOST:-ultrafeeder}"
 
-# make sure the log files exists:
-mkdir -p "$(dirname "$IP_RESOLVE_HEALTHFILE")"
-echo "0" > "$IP_RESOLVE_HEALTHFILE"
-
-beast_host="${BEASTHOST:-ultrafeeder}"
-if ! valid_ip "$beast_host"; then
-	beast_host="$(dig "${BEASTHOST:-ultrafeeder}" | awk '{if ($1 == "'"${BEASTHOST:-ultrafeeder}"'.") print $5}')"
-    # If it fails, print error message and loop trying every 30 secs
-	if ! valid_ip "$beast_host"; then
-        while ! valid_ip "$beast_host"; do
-            "${s6wrap[@]}" --args echo "WARNING: BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") cannot be resolved. Make sure that \"${BEASTHOST:-ultrafeeder}\" is running or check your BEASTHOST parameter setting. Trying again in 30 seconds."
-            read -r healthfailures < "$IP_RESOLVE_HEALTHFILE"
-            (( healthfailures++ )) || true
-            echo "$healthfailures" > "$IP_RESOLVE_HEALTHFILE"
-            sleep 30
-            beast_host="$(dig "${BEASTHOST:-ultrafeeder}" | awk '{if ($1 == "'"${BEASTHOST:-ultrafeeder}"'.") print $5}')"
-        done
-    fi
-    echo "0" > "$IP_RESOLVE_HEALTHFILE"
-    chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo "BEASTHOST (\"${BEASTHOST:-ultrafeeder}\") successfully resolved to $beast_host" || true
-fi
-
-if ! nc -z "${beast_host}" 30005 >/dev/null 2>&1; then
-    "${s6wrap[@]}" --args echo "INFO: Waiting for BEASTHOST (${BEASTHOST:-ultrafeeder}/${beast_host}) to come online"
-    while ! nc -z "${beast_host}" 30005 >/dev/null 2>&1; do
+if ! nc -z "${BEASTHOST}" 30005 >/dev/null 2>&1; then
+    "${s6wrap[@]}" --args echo "INFO: Waiting for BEASTHOST (${BEASTHOST}) to come online"
+    while ! nc -z "${BEASTHOST}" 30005 >/dev/null 2>&1; do
         sleep 1
     done
-    "${s6wrap[@]}" --args echo "INFO: BEASTHOST (${BEASTHOST:-ultrafeeder}/${beast_host}) is now online"
+    "${s6wrap[@]}" --args echo "INFO: BEASTHOST (${BEASTHOST}) is now online"
 fi
 
 RADAR_BIN=(stdbuf -oL /usr/sbin/radar)
@@ -91,7 +54,7 @@ else
   RADAR_CMD+=("-h ${RADARSERVER:-adsb-in.1090mhz.uk}")
 fi
 RADAR_CMD+=("${HMAC_KEY:+-p }${HMAC_KEY}")
-RADAR_CMD+=("-l ${beast_host}")
+RADAR_CMD+=("-l ${BEASTHOST}")
 RADAR_CMD+=("-f")
 
 # Make sure logfile exists and is writable with UID "radar".
