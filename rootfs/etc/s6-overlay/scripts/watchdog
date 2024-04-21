@@ -37,9 +37,13 @@ TRANSPORT_PROTOCOL="${TRANSPORT_PROTOCOL,,}"
 
 HEALTHFILE=/run/watchdog-log/health_failures_since_last_success
 
+BEAST_HEALTHFILE=/run/watchdog-log/beast_connection_failures
+
 # make sure the log files exists:
 mkdir -p "$(dirname "$HEALTHFILE")"
 echo "0" > "$HEALTHFILE"
+mkdir -p "$(dirname "$BEAST_HEALTHFILE")"
+echo "0" > "$BEAST_HEALTHFILE"
 
 monitor_feeder () { 
   # see if data is flowing from this container to the remote aggregator
@@ -75,6 +79,12 @@ fix_feeder () { # bring down the feeder apps:
   return $?
 }
 
+# check for connection to BEASTHOST
+check_beast () {
+  { netstat -tp -n; netstat -tp --numeric-ports; } | awk '{ if ($6 == "ESTABLISHED") print $5}' | grep -qs "${BEASTHOST}.*30005"
+  return $?
+}
+
 while :
 do
   # first sleep a bit
@@ -94,6 +104,15 @@ do
       echo "0" > "$HEALTHFILE"
     fi
 
+  elif ! check_beast; then
+    s6-svc -r /run/service/radar1090
+    sleep 10
+    if ! check_beast; then
+      read -r beast_healthfailures < "$BEAST_HEALTHFILE"
+      (( beast_healthfailures++ )) || true
+      echo "$beast_healthfailures" > "$BEAST_HEALTHFILE"
+      "${s6wrap[@]}" --args echo "FATAL: No connection to ${BEASTHOST}.*30005 detected, restarting the feeder mdoule didn't fix it!"
+    fi
   else
     if chk_enabled "$VERBOSE"; then
       "${s6wrap[@]}" --args echo "SUCCESS: Data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs"
