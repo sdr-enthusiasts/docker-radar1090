@@ -63,4 +63,4 @@ touch /var/log/radar1090
 chmod a+w /var/log/radar1090
 
 "${s6wrap[@]}" --args echo "invoking: ${RADAR_BIN[@]} ${RADAR_CMD[@]}"
-${RADAR_BIN[@]} ${RADAR_CMD[@]} >> /var/log/radar1090
+exec ${RADAR_BIN[@]} ${RADAR_CMD[@]} >> /var/log/radar1090
