@@ -1,12 +1,11 @@
 #!/command/with-contenv bash
-# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145,SC2120
+# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145,SC2120,SC2154
 
 source /scripts/common
-s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 #---------------------------------------------------------------------------------------------
 # This repository, docker container, and accompanying scripts and documentation is
-# Copyright (C) 2022-2023, Ramon F. Kolb (kx1t)
+# Copyright (C) 2022-2024, Ramon F. Kolb (kx1t) and contributors
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -28,7 +27,7 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 # Watchdog to ensure there's traffic flowing for radar1090
 # Uses TCPDUMP to ensure there are packets sent to the destination port
 
-"${s6wrap[@]}" --args echo "starting as a service..."
+"${s6wrap[@]}" echo "starting as a service..."
 
 MEASURE_TIME="${MEASURE_TIME:-15}"              # how long we take samples to check data is flowing
 MEASURE_INTERVAL="${MEASURE_INTERVAL:-300}"     # wait time between check runs
@@ -55,7 +54,7 @@ monitor_feeder () {
   local result
   local resultcode
 
-  chk_enabled "$VERBOSE" && "${s6wrap[@]}" --args echo monitoring "${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} for ${measure_time:-10} secs"  || true
+  chk_enabled "$VERBOSE" && "${s6wrap[@]}" echo monitoring "${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} for ${measure_time:-10} secs"  || true
 
   measure_time="${1:-${MEASURE_TIME:-10}}"
   result="$(grep captured <<< "$(timeout --preserve-status "${measure_time}" tcpdump -p dst "${RADARSERVER:-adsb-in.1090mhz.uk}" and "${TRANSPORT_PROTOCOL:-udp}" port "${RADARPORT:-5997}" 2>/dev/stdout 1>/dev/null)" | awk '{print $1}')" 
@@ -92,15 +91,15 @@ do
 
   # then check if data is flowing
   if ! monitor_feeder; then
-    "${s6wrap[@]}" --args echo "WARNING: DataFlow Failure: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs. Feeder will be restarted"
+    "${s6wrap[@]}" echo "WARNING: DataFlow Failure: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs. Feeder will be restarted"
     if ! fix_feeder
     then
-      "${s6wrap[@]}" --args echo "FATAL: DataFlow Failure: Restarting feeder module didn't restart the data flow. Please check your system! We will try again in $MEASURE_INTERVAL secs"
+      "${s6wrap[@]}" echo "FATAL: DataFlow Failure: Restarting feeder module didn't restart the data flow. Please check your system! We will try again in $MEASURE_INTERVAL secs"
       read -r healthfailures < "$HEALTHFILE"
       (( healthfailures++ )) || true
       echo "$healthfailures" > "$HEALTHFILE"
     else
-      "${s6wrap[@]}" --args echo "SUCCESS: Feeder restart made data flow again!"
+      "${s6wrap[@]}" echo "SUCCESS: Feeder restart made data flow again!"
       echo "0" > "$HEALTHFILE"
     fi
 
@@ -111,11 +110,11 @@ do
       read -r beast_healthfailures < "$BEAST_HEALTHFILE"
       (( beast_healthfailures++ )) || true
       echo "$beast_healthfailures" > "$BEAST_HEALTHFILE"
-      "${s6wrap[@]}" --args echo "FATAL: No connection to ${BEASTHOST}.*30005 detected, restarting the feeder mdoule didn't fix it!"
+      "${s6wrap[@]}" echo "FATAL: No connection to ${BEASTHOST}.*30005 detected, restarting the feeder mdoule didn't fix it!"
     fi
   else
     if chk_enabled "$VERBOSE"; then
-      "${s6wrap[@]}" --args echo "SUCCESS: Data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs"
+      "${s6wrap[@]}" echo "SUCCESS: Data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs"
     fi
     echo "0" > "$HEALTHFILE"
 

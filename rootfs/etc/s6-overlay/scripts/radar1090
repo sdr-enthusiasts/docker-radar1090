@@ -1,12 +1,11 @@
 #!/command/with-contenv bash
-# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145
+# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145,SC2154
 
 source /scripts/common
-s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 #---------------------------------------------------------------------------------------------
 # This repository, docker container, and accompanying scripts and documentation is
-# Copyright (C) 2022-2023, Ramon F. Kolb (kx1t)
+# Copyright (C) 2022-2024, Ramon F. Kolb (kx1t) and contributors
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -27,21 +26,21 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 # Run radar1090 as a long term service
 
-"${s6wrap[@]}" --args echo "starting as a service..."
+"${s6wrap[@]}" echo "starting as a service..."
 
 if [[ -z "${RADAR1090_KEY}" ]]; then
-	"${s6wrap[@]}" --args echo "FATAL: RADAR1090_KEY not set. Halting operation."
+	"${s6wrap[@]}" echo "FATAL: RADAR1090_KEY not set. Halting operation."
 	exec sleep infinity
 fi
 
 BEASTHOST="${BEASTHOST:-ultrafeeder}"
 
 if ! nc -z "${BEASTHOST}" 30005 >/dev/null 2>&1; then
-    "${s6wrap[@]}" --args echo "INFO: Waiting for BEASTHOST (${BEASTHOST}) to come online"
+    "${s6wrap[@]}" echo "INFO: Waiting for BEASTHOST (${BEASTHOST}) to come online"
     while ! nc -z "${BEASTHOST}" 30005 >/dev/null 2>&1; do
         sleep 1
     done
-    "${s6wrap[@]}" --args echo "INFO: BEASTHOST (${BEASTHOST}) is now online"
+    "${s6wrap[@]}" echo "INFO: BEASTHOST (${BEASTHOST}) is now online"
 fi
 
 RADAR_BIN=(stdbuf -oL /usr/sbin/radar)
@@ -62,5 +61,5 @@ RADAR_CMD+=("-f")
 touch /var/log/radar1090
 chmod a+w /var/log/radar1090
 
-"${s6wrap[@]}" --args echo "invoking: ${RADAR_BIN[@]} ${RADAR_CMD[@]}"
+"${s6wrap[@]}" echo "invoking: ${RADAR_BIN[@]} ${RADAR_CMD[@]}"
 exec ${RADAR_BIN[@]} ${RADAR_CMD[@]} >> /var/log/radar1090
