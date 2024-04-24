@@ -1,12 +1,11 @@
 #!/command/with-contenv bash
-# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145
+# shellcheck shell=bash disable=SC1091,SC2015,SC2164,SC2068,SC2145,SC2154
 
 source /scripts/common
-s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 
 #---------------------------------------------------------------------------------------------
 # This repository, docker container, and accompanying scripts and documentation is
-# Copyright (C) 2022-2023, Ramon F. Kolb (kx1t)
+# Copyright (C) 2022-2024, Ramon F. Kolb (kx1t) and contributors
 #
 # This program is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -30,7 +29,7 @@ s6wrap=(s6wrap --quiet --timestamps --prepend="$(basename "$0")")
 # - every 5 minutes if VERBOSE!=true
 # Note that the output of radar1090 writes a log line every second, even though it may take up to 60 seconds for its buffer to be flushed
 
-"${s6wrap[@]}" --args echo "starting as a service..."
+"${s6wrap[@]}" echo "starting as a service..."
 
 VERBOSE_WAIT=60
 NON_VERBOSE_WAIT=300
@@ -72,10 +71,10 @@ while true; do
     avg_bps="$(bc -l <<< "scale=0; (${bytespersec[@]//[$'\t\r\n']/+})/${#loglines[@]}/1")"
     
     # Print the stats to the container logs:
-    "${s6wrap[@]}" --args echo "------------------------"
-    "${s6wrap[@]}" --args echo "Traffic statistics over the previous $WAITTIME seconds:"
-    "${s6wrap[@]}" --args echo "- Total packets received from ${BEASTHOST:-ultrafeeder}: $total_packets"
-    "${s6wrap[@]}" --args echo "- Duplicate packets discarded: $total_dupes"
-    "${s6wrap[@]}" --args echo "- Average bandwidth used (excluding overhead): $avg_bps bytes/sec"
+    "${s6wrap[@]}" echo "------------------------"
+    "${s6wrap[@]}" echo "Traffic statistics over the previous $WAITTIME seconds:"
+    "${s6wrap[@]}" echo "- Total packets received from ${BEASTHOST:-ultrafeeder}: $total_packets"
+    "${s6wrap[@]}" echo "- Duplicate packets discarded: $total_dupes"
+    "${s6wrap[@]}" echo "- Average bandwidth used (excluding overhead): $avg_bps bytes/sec"
 
 done
