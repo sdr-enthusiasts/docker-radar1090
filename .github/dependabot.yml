@@ -10,6 +10,9 @@ updates:
     target-branch: "main"
     schedule:
       interval: "weekly"
+      day: "saturday"
+      time: "00:00"
+      timezone: "Etc/UTC"
     assignees:
       - "fredclausen"
 
@@ -18,5 +21,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "saturday"
+      time: "00:00"
+      timezone: "Etc/UTC"
     assignees:
       - "fredclausen"
