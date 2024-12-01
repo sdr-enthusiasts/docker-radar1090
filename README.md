@@ -59,21 +59,20 @@ You need an existing feeder setup supporting the Beast protocol (or AVR, bur we 
 Once you have your basic feeder installed, you can add the following minimal configuration to your `docker-compose.yml` file to start feeding Radar1090 UK. Additionally supported parameters are listed further down this document.
 
 ```yaml
-  radar1090:
-    image: ghcr.io/sdr-enthusiasts/docker-radar1090:latest
-    tty: true
-    container_name: radar1090
-    hostname: radar1090
-    restart: always
-    environment:
-      - TZ=${FEEDER_TZ}
-      - RADAR1090_KEY=${RADAR1090_KEY}  # replace ${RADAR1090_KEY} with your sharing key 
-      - VERBOSE=false           # set to true to get lots of feeder information in your container logs
-      - BEASTHOST=ultrafeeder   # replace ultrafeeder with the container name of your ADSB receiver or the IP address of your host machine if your feeder is not in the same container stack
-    tmpfs:
-      - /run:exec,size=256M
-      - /tmp:size=128M
-      - /var/log:size=32M
+radar1090:
+  image: ghcr.io/sdr-enthusiasts/docker-radar1090:latest
+  container_name: radar1090
+  hostname: radar1090
+  restart: always
+  environment:
+    - TZ=${FEEDER_TZ}
+    - RADAR1090_KEY=${RADAR1090_KEY} # replace ${RADAR1090_KEY} with your sharing key
+    - VERBOSE=false # set to true to get lots of feeder information in your container logs
+    - BEASTHOST=ultrafeeder # replace ultrafeeder with the container name of your ADSB receiver or the IP address of your host machine if your feeder is not in the same container stack
+  tmpfs:
+    - /run:exec,size=256M
+    - /tmp:size=128M
+    - /var/log:size=32M
 ```
 
 Once you have added this to your setup, simply do `docker compose up -d` in the directory where your `docker-compose.yml` file is located, and you will start feeding your ADS-B data to Radar1090 UK!
@@ -83,23 +82,23 @@ Once you have added this to your setup, simply do `docker compose up -d` in the 
 The container uses an internal Watchdog to ensure that data is still flowing to the Radar1090 Server. Data flow can stop for any reason, and often the container can self-repair to get the data flow starting again.
 The watchdog runs by default every 15 minutes, and when it runs, it will sample the data stream for 15 seconds. If no data flow was detected going from the container to the Radar1090 Server, it will try to restart the internal feeder module in an attempt to get data flowing again.
 
-Additionally, it will increase the *failure counter* (or reset this counter if data is flowing again).
-Once the *failure counter* is greater or equal to 3, the container's HEALTHCHECK will go *UNHEALTHY*. This will enable external management containers like `autoheal` to automatically restart the entire container.
+Additionally, it will increase the _failure counter_ (or reset this counter if data is flowing again).
+Once the _failure counter_ is greater or equal to 3, the container's HEALTHCHECK will go _UNHEALTHY_. This will enable external management containers like `autoheal` to automatically restart the entire container.
 
 ## Supported parameters
 
 The following parameters are supported for the `docker-radar1090` container. Please note that only the `RADAR1090_KEY` parameter is mandatory, the rest are optional.
 
-| Parameter | Description | Default value if omitted |
-|-----------|-------------|---------------|
-| `TZ` | Sets the timezone for the container, in the format `Europe/London` | Unset (UTC) |
-| `RADAR1090_KEY` | Sharing Key (in this format `0x7A3DF151D95F3E9A`) as provided by Radar1090 UK | Unset |
-| `BEASTHOST` | Hostname or IP address of the Beast-format data source. Use the container name if available, or use the host machine's IP address (and not `localhost` or `127.0.0.1`!) if your feeder is not containerized | `ultrafeeder` |
-| `RADARSERVER` | Hostname or IP address of the Radar1090 Server. You shouldn't have to set this parameter unless Radar1090 asks you to change it | `adsb-in.1090mhz.uk` |
-| `HMAC_KEY` | HMAC PSK key to be used when secure data transmissions are required. Do not change unless you are requested by the Radar1090b server owner | Unset | 
-| `MEASURE_INTERVAL` | Watchdog measurement interval (in secs) - interval in which the internal Watchdog verifies that data is still flowing to the Radar1090 Server | `300` |
-| `MEASURE_TIME` | Watchdog measurement time (in secs) - How long the internal Watchdog will monitor that stat is still flowing to the Radar1090 Server | `15` |
-| `FAILURES_TO_GO_UNHEALTHY` | HEALTHCHECK related parameter - the minimum number of consecutive Watchdog failures that will make the container go `UNHEALTHY` | `3` |
+| Parameter                  | Description                                                                                                                                                                                                 | Default value if omitted |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `TZ`                       | Sets the timezone for the container, in the format `Europe/London`                                                                                                                                          | Unset (UTC)              |
+| `RADAR1090_KEY`            | Sharing Key (in this format `0x7A3DF151D95F3E9A`) as provided by Radar1090 UK                                                                                                                               | Unset                    |
+| `BEASTHOST`                | Hostname or IP address of the Beast-format data source. Use the container name if available, or use the host machine's IP address (and not `localhost` or `127.0.0.1`!) if your feeder is not containerized | `ultrafeeder`            |
+| `RADARSERVER`              | Hostname or IP address of the Radar1090 Server. You shouldn't have to set this parameter unless Radar1090 asks you to change it                                                                             | `adsb-in.1090mhz.uk`     |
+| `HMAC_KEY`                 | HMAC PSK key to be used when secure data transmissions are required. Do not change unless you are requested by the Radar1090b server owner                                                                  | Unset                    |
+| `MEASURE_INTERVAL`         | Watchdog measurement interval (in secs) - interval in which the internal Watchdog verifies that data is still flowing to the Radar1090 Server                                                               | `300`                    |
+| `MEASURE_TIME`             | Watchdog measurement time (in secs) - How long the internal Watchdog will monitor that stat is still flowing to the Radar1090 Server                                                                        | `15`                     |
+| `FAILURES_TO_GO_UNHEALTHY` | HEALTHCHECK related parameter - the minimum number of consecutive Watchdog failures that will make the container go `UNHEALTHY`                                                                             | `3`                      |
 
 ## HealthCheck
 
@@ -115,7 +114,7 @@ Note that the number of failures is configurable with the `FAILURES_TO_GO_UNHEAL
 If, for any reason, you need to disabled HEALTHCHECK, you can use the following image tag instead of the one recommended above:
 
 ```yaml
-    image: ghcr.io/sdr-enthusiasts/docker-radar1090:latest-nohealthcheck
+image: ghcr.io/sdr-enthusiasts/docker-radar1090:latest-nohealthcheck
 ```
 
 ## Logging
