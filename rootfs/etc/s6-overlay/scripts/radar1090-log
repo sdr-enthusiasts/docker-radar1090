@@ -69,7 +69,7 @@ while true; do
     total_packets="$(bc -l <<< "${packets[@]//[$'\t\r\n']/+}")"
     total_dupes="$(bc -l <<< "${dupes[@]//[$'\t\r\n']/+}")"
     avg_bps="$(bc -l <<< "scale=0; (${bytespersec[@]//[$'\t\r\n']/+})/${#loglines[@]}/1")"
-    
+
     # Print the stats to the container logs:
     "${s6wrap[@]}" echo "------------------------"
     "${s6wrap[@]}" echo "Traffic statistics over the previous $WAITTIME seconds:"

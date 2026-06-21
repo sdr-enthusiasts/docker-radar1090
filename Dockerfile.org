@@ -3,6 +3,8 @@ FROM ghcr.io/sdr-enthusiasts/docker-baseimage:base
 ARG radarurl="ftp://public.tubby.org/radar-0.99.tar.gz"
 ARG radarurlcreds="ftp:"
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# hadolint ignore=DL3003,SC2068
 RUN set -x && \
     # define packages needed for installation and general management of the container:
     TEMP_PACKAGES=() && \
@@ -12,7 +14,7 @@ RUN set -x && \
     TEMP_PACKAGES+=(build-essential) && \
     KEPT_PACKAGES+=(tcpdump) && \
     KEPT_PACKAGES+=(logrotate) && \
-    # 
+    #
     # Install all the apt packages:
     apt-get update -q && \
     apt-get install -q -o APT::Autoremove::RecommendsImportant=0 -o APT::Autoremove::SuggestsImportant=0 -o Dpkg::Options::="--force-confold" -y --no-install-recommends  --no-install-suggests ${TEMP_PACKAGES[@]} ${KEPT_PACKAGES[@]} && \

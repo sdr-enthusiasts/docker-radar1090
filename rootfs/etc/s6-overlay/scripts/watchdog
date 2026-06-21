@@ -40,84 +40,86 @@ BEAST_HEALTHFILE=/run/watchdog-log/beast_connection_failures
 
 # make sure the log files exists:
 mkdir -p "$(dirname "$HEALTHFILE")"
-echo "0" > "$HEALTHFILE"
+echo "0" >"$HEALTHFILE"
 mkdir -p "$(dirname "$BEAST_HEALTHFILE")"
-echo "0" > "$BEAST_HEALTHFILE"
+echo "0" >"$BEAST_HEALTHFILE"
 
-monitor_feeder () { 
-  # see if data is flowing from this container to the remote aggregator
-  # usage: monitor_feeder [measure_time]
-  #        where measure_time is optional; if omitted, $MEASURE_TIME or 10 secs will be used
-  #        $RADARSERVER and $RADARPORT are used to indicate the aggregator's name and port, defaulting to adsb-in.1090mhz.uk and 2227
-  # Function returns 0 (true) if successful and 1 (false) if the host cannot be reached
-  local measure_time
-  local result
-  local resultcode
+monitor_feeder() {
+    # see if data is flowing from this container to the remote aggregator
+    # usage: monitor_feeder [measure_time]
+    #        where measure_time is optional; if omitted, $MEASURE_TIME or 10 secs will be used
+    #        $RADARSERVER and $RADARPORT are used to indicate the aggregator's name and port, defaulting to adsb-in.1090mhz.uk and 2227
+    # Function returns 0 (true) if successful and 1 (false) if the host cannot be reached
+    local measure_time
+    local result
+    local resultcode
 
-  chk_enabled "$VERBOSE" && "${s6wrap[@]}" echo monitoring "${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} for ${measure_time:-10} secs"  || true
+    chk_enabled "$VERBOSE" && "${s6wrap[@]}" echo monitoring "${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} for ${measure_time:-10} secs" || true
 
-  measure_time="${1:-${MEASURE_TIME:-10}}"
-  result="$(grep captured <<< "$(timeout --preserve-status "${measure_time}" tcpdump -p dst "${RADARSERVER:-adsb-in.1090mhz.uk}" and "${TRANSPORT_PROTOCOL:-udp}" port "${RADARPORT:-5997}" 2>/dev/stdout 1>/dev/null)" | awk '{print $1}')" 
-  resultcode="$?"
+    measure_time="${1:-${MEASURE_TIME:-10}}"
+    # FIXME: does this work or should we revert to result="$(grep captured <<< "$(timeout --preserve-status "${measure_time}" tcpdump -p dst "${RADARSERVER:-adsb-in.1090mhz.uk}" and "${TRANSPORT_PROTOCOL:-udp}" port "${RADARPORT:-5997}" 2>/dev/stdout 1>/dev/null)" | awk '{print $1}')"
+    result="$(timeout --preserve-status "${measure_time}" tcpdump -p dst "${RADARSERVER:-adsb-in.1090mhz.uk}" and "${TRANSPORT_PROTOCOL:-udp}" port "${RADARPORT:-5997}" 2>&1 1>/dev/null | grep captured | awk '{print $1}')"
+    resultcode="$?"
 
-  if  (( resultcode != 0 )); then
-    return $resultcode
-  elif [[ "$result" == "0" ]]; then
-    return 1
-  else
-    return 0
-  fi
+    if ((resultcode != 0)); then
+        return $resultcode
+    elif [[ "$result" == "0" ]]; then
+        return 1
+    else
+        return 0
+    fi
 }
 
-fix_feeder () { # bring down the feeder apps:
-  s6-svc -r /run/service/radar1090
-  sleep 10
+fix_feeder() { # bring down the feeder apps:
+    s6-svc -r /run/service/radar1090
+    sleep 10
 
-  # check if data is flowing again:
-  monitor_feeder
-  return $?
+    # check if data is flowing again:
+    monitor_feeder
+    return $?
 }
 
 # check for connection to BEASTHOST
-check_beast () {
-  { netstat -tp -n; netstat -tp --numeric-ports; } | awk '{ if ($6 == "ESTABLISHED") print $5}' | grep -qs "${BEASTHOST}.*30005"
-  return $?
+check_beast() {
+    {
+        netstat -tp -n
+        netstat -tp --numeric-ports
+    } | awk '{ if ($6 == "ESTABLISHED") print $5}' | grep -qs "${BEASTHOST}.*30005"
+    return $?
 }
 
-while :
-do
-  # first sleep a bit
-  sleep "$MEASURE_INTERVAL"
+while :; do
+    # first sleep a bit
+    sleep "$MEASURE_INTERVAL"
 
-  # then check if data is flowing
-  if ! monitor_feeder; then
-    "${s6wrap[@]}" echo "WARNING: DataFlow Failure: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs. Feeder will be restarted"
-    if ! fix_feeder
-    then
-      "${s6wrap[@]}" echo "FATAL: DataFlow Failure: Restarting feeder module didn't restart the data flow. Please check your system! We will try again in $MEASURE_INTERVAL secs"
-      read -r healthfailures < "$HEALTHFILE"
-      (( healthfailures++ )) || true
-      echo "$healthfailures" > "$HEALTHFILE"
+    # then check if data is flowing
+    if ! monitor_feeder; then
+        "${s6wrap[@]}" echo "WARNING: DataFlow Failure: No data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs. Feeder will be restarted"
+        if ! fix_feeder; then
+            "${s6wrap[@]}" echo "FATAL: DataFlow Failure: Restarting feeder module didn't restart the data flow. Please check your system! We will try again in $MEASURE_INTERVAL secs"
+            read -r healthfailures <"$HEALTHFILE"
+            ((healthfailures++)) || true
+            echo "$healthfailures" >"$HEALTHFILE"
+        else
+            "${s6wrap[@]}" echo "SUCCESS: Feeder restart made data flow again!"
+            echo "0" >"$HEALTHFILE"
+        fi
+
+    elif ! check_beast; then
+        s6-svc -r /run/service/radar1090
+        sleep 10
+        if ! check_beast; then
+            read -r beast_healthfailures <"$BEAST_HEALTHFILE"
+            ((beast_healthfailures++)) || true
+            echo "$beast_healthfailures" >"$BEAST_HEALTHFILE"
+            "${s6wrap[@]}" echo "FATAL: No connection to ${BEASTHOST}.*30005 detected, restarting the feeder mdoule didn't fix it!"
+        fi
     else
-      "${s6wrap[@]}" echo "SUCCESS: Feeder restart made data flow again!"
-      echo "0" > "$HEALTHFILE"
-    fi
+        if chk_enabled "$VERBOSE"; then
+            "${s6wrap[@]}" echo "SUCCESS: Data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs"
+        fi
+        echo "0" >"$HEALTHFILE"
 
-  elif ! check_beast; then
-    s6-svc -r /run/service/radar1090
-    sleep 10
-    if ! check_beast; then
-      read -r beast_healthfailures < "$BEAST_HEALTHFILE"
-      (( beast_healthfailures++ )) || true
-      echo "$beast_healthfailures" > "$BEAST_HEALTHFILE"
-      "${s6wrap[@]}" echo "FATAL: No connection to ${BEASTHOST}.*30005 detected, restarting the feeder mdoule didn't fix it!"
     fi
-  else
-    if chk_enabled "$VERBOSE"; then
-      "${s6wrap[@]}" echo "SUCCESS: Data is flowing to ${RADARSERVER:-adsb-in.1090mhz.uk}:${RADARPORT:-2227}/${TRANSPORT_PROTOCOL:-udp} after checking for ${measure_time:-10} secs"
-    fi
-    echo "0" > "$HEALTHFILE"
-
-  fi
 
 done

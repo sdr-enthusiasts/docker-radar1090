@@ -4,6 +4,7 @@ ARG radar_base_url="https://1090mhz.uk/files/"
 ARG radar_repo="https://github.com/G8TIC/radar.git"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# hadolint ignore=DL3003
 RUN set -x && \
   # define packages needed for installation and general management of the container:
   TEMP_PACKAGES=() && \
