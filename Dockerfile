@@ -72,7 +72,7 @@ RUN set -x && \
   echo "alias dir=\"ls -alsv\"" >> /root/.bashrc && \
   echo "alias nano=\"nano -l\"" >> /root/.bashrc
 
-HEALTHCHECK --interval=300s --timeout=30s --start-period=300s --retries=1 CMD /scripts/healthcheck.sh
+HEALTHCHECK --interval=300s --timeout=30s --start-period=300s --retries=1 CMD ["/scripts/healthcheck.sh"]
 #
 # No need for SHELL and ENTRYPOINT as those are inherited from the base image
 #
