@@ -27,7 +27,9 @@ RUN set -x && \
   # new method is to get the source from the github repo:
   git clone --depth=1 "${radar_repo}" radar && \
   cd radar && \
-  make && \
+  # GCC 16 (forky) flags a counter in authtag.c that is set but never read, and
+  # upstream builds with -Werror; keep it a warning until upstream drops it.
+  make CC="cc -Wno-error=unused-but-set-variable" && \
   make install && \
   popd || exit 1
 
