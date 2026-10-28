@@ -52,7 +52,7 @@ You need an existing feeder setup supporting the Beast protocol (or AVR, bur we 
 
 - [ADSB Gitbook](https://sdr-enthusiasts.gitbook.io/ads-b/) with all the background information you need to set up your containerized station in a way that is easy to understand
 - [adsb.im](https://adsb.im) which is a GUI based setup mechanism that creates an SD card image for your SBC that is ready to use for receiving ADSB data with a SDR dongle
-- [SDR Enthusiasts' Docker Install Repo](https://github.com/sdr-enthustiasts/docker-install) with a script to easily add and setup Docker on any Debian Linux machine, and example `docker-compose.yml` and `.env` files that you can use as a starting point for your own deployment.
+- [SDR Enthusiasts' Docker Install Repo](https://github.com/sdr-enthusiasts/docker-install) with a script to easily add and setup Docker on any Debian Linux machine, and example `docker-compose.yml` and `.env` files that you can use as a starting point for your own deployment.
 
 ### Adding and configuring Radar1090 UK
 
