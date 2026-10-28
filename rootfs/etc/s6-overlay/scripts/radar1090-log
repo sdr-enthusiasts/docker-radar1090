@@ -58,14 +58,16 @@ while true; do
     # Immediately clear logs:
     logrotate -f /etc/default/logrotate.conf
     # see if we need to clean up the last loglines entry because often it's incomplete
-    if [[ -z "$(awk '{ print $11 }' <<< "${loglines[-1]}")" ]]; then
+    if [[ -z "$(awk '{ print $19 }' <<< "${loglines[-1]}")" ]]; then
         unset 'loglines[-1]'
     fi
 
-    # Now parse some statistics:
-    packets=("$(awk '{ print $3 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
-    dupes=("$(awk '{ print $7 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
-    bytespersec=("$(awk '{ print $11 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
+    # Now parse some statistics. A line looks like:
+    # UDP sent:  20   Multiframes:  20  ADSB sent: 202   Dupes (Not Sent): 110   Dupes (Cleaned): 255   Bytes per second:  4842
+    # so $8 is ADSB sent, $12 is Dupes (Not Sent) and $19 is Bytes per second.
+    packets=("$(awk '{ print $8 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
+    dupes=("$(awk '{ print $12 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
+    bytespersec=("$(awk '{ print $19 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
     total_packets="$(bc -l <<< "${packets[@]//[$'\t\r\n']/+}")"
     total_dupes="$(bc -l <<< "${dupes[@]//[$'\t\r\n']/+}")"
     avg_bps="$(bc -l <<< "scale=0; (${bytespersec[@]//[$'\t\r\n']/+})/${#loglines[@]}/1")"
