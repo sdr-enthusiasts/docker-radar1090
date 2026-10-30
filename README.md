@@ -42,7 +42,7 @@ The following information was copied from the [Radar1090 UK website](https://www
 
 Please send the desired station name and latitude/longitude to Mike Tubby via [email](mailto:mike@tubby.org) or [WhatsApp](whatsapp:+441905888020).
 
-If accepted, you will receive a feeder key that looks like this: `0x7A3DF151D95F3E9A`.
+If accepted, you will receive a feeder key that looks like this: `0x7A3DF151D95F3E9A`. You may also receive an optional passphrase.
 
 ## Installing `docker-radar1090`
 
@@ -52,7 +52,7 @@ You need an existing feeder setup supporting the Beast protocol (or AVR, bur we 
 
 - [ADSB Gitbook](https://sdr-enthusiasts.gitbook.io/ads-b/) with all the background information you need to set up your containerized station in a way that is easy to understand
 - [adsb.im](https://adsb.im) which is a GUI based setup mechanism that creates an SD card image for your SBC that is ready to use for receiving ADSB data with a SDR dongle
-- [SDR Enthusiasts' Docker Install Repo](https://github.com/sdr-enthustiasts/docker-install) with a script to easily add and setup Docker on any Debian Linux machine, and example `docker-compose.yml` and `.env` files that you can use as a starting point for your own deployment.
+- [SDR Enthusiasts' Docker Install Repo](https://github.com/sdr-enthusiasts/docker-install) with a script to easily add and setup Docker on any Debian Linux machine, and example `docker-compose.yml` and `.env` files that you can use as a starting point for your own deployment.
 
 ### Adding and configuring Radar1090 UK
 
@@ -67,6 +67,7 @@ radar1090:
   environment:
     - TZ=${FEEDER_TZ}
     - RADAR1090_KEY=${RADAR1090_KEY} # replace ${RADAR1090_KEY} with your sharing key
+    - HMAC_KEY=${RADAR1090_PASSPHRASE} # replace ${RADAR1090_PASSPHRASE} with the "secret" passphrase you received
     - VERBOSE=false # set to true to get lots of feeder information in your container logs
     - BEASTHOST=ultrafeeder # replace ultrafeeder with the container name of your ADSB receiver or the IP address of your host machine if your feeder is not in the same container stack
   tmpfs:
