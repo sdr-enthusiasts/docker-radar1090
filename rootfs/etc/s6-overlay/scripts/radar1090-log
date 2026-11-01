@@ -35,6 +35,8 @@ VERBOSE_WAIT=60
 NON_VERBOSE_WAIT=300
 LOGFILE="/var/log/radar1090"
 
+ulimit -n 65536 2>/dev/null || true
+
 chk_enabled "$VERBOSE" && WAITTIME="$VERBOSE_WAIT" || WAITTIME="$NON_VERBOSE_WAIT"
 
 # seed random generator:
@@ -53,22 +55,20 @@ while true; do
         sleep 1
     done
 
-    # Now read the data:
-    readarray -t loglines <<< "$(tail -"$WAITTIME" "$LOGFILE")"
+    # Now read the data and parse the statistics in a single pass; the last line is often incomplete, so skip it if field 19 is empty.
+    # Fields: $8 = ADSB sent, $12 = Dupes (Not Sent), $19 = Bytes per second
+    read -r total_packets total_dupes avg_bps < <(
+        tail -"$WAITTIME" "$LOGFILE" | awk '
+            { l[NR] = $0 }
+            END {
+                n = NR
+                if (n > 0) { split(l[n], f, " "); if (f[19] == "") n-- }
+                for (i = 1; i <= n; i++) { split(l[i], f, " "); p += f[8]; d += f[12]; b += f[19] }
+                printf "%d %d %d\n", p, d, (n > 0 ? b / n : 0)
+            }'
+    )
     # Immediately clear logs:
     logrotate -f /etc/default/logrotate.conf
-    # see if we need to clean up the last loglines entry because often it's incomplete
-    if [[ -z "$(awk '{ print $11 }' <<< "${loglines[-1]}")" ]]; then
-        unset 'loglines[-1]'
-    fi
-
-    # Now parse some statistics:
-    packets=("$(awk '{ print $3 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
-    dupes=("$(awk '{ print $7 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
-    bytespersec=("$(awk '{ print $11 }' <<< "$(printf "%s\n" "${loglines[@]}")")")
-    total_packets="$(bc -l <<< "${packets[@]//[$'\t\r\n']/+}")"
-    total_dupes="$(bc -l <<< "${dupes[@]//[$'\t\r\n']/+}")"
-    avg_bps="$(bc -l <<< "scale=0; (${bytespersec[@]//[$'\t\r\n']/+})/${#loglines[@]}/1")"
 
     # Print the stats to the container logs:
     "${s6wrap[@]}" echo "------------------------"
